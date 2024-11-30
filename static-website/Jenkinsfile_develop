@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh 'docker build -t my-static-website .'
+            }
+        }
+        stage('Run Container') {
+            steps {
+                sh 'docker run -d -p 8082:80 --name develop-container my-static-website'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'curl -I localhost:8082'
+            }
+        }
+        stage('Tag and Push Image') {
+            steps {
+                sh 'docker tag my-static-website HargunS1/my-static-website:latest'
+                sh 'docker tag my-static-website HargunS1/my-static-website:develop-${env.BUILD_ID}'
+                sh 'docker push HargunS1/my-static-website:latest'
+                sh 'docker push HargunS1/my-static-website:develop-${env.BUILD_ID}'
+            }
+        }
+    }
+}
+
