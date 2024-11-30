@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    stages {
+        stage('Pull Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        // Log in to Docker Hub
+                        sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                        
+                        // Pull the Docker image
+                        sh 'docker pull ${DOCKER_USER}/my-static-website:latest'
+                    }
+                }
+            }
+        }
+        stage('Run Container') {
+            steps {
+                script {
+                    sh '''
+                    # Stop and remove any existing container
+                    docker stop my-static-website || true
+                    docker rm my-static-website || true
+                    
+                    # Run a new container
+                    docker run -d -p 8082:80 --name master-container my-static-website:latest
+
+                    '''
+                }
+            }
+        }
+        stage('Test Website Accessibility') {
+            steps {
+                script {
+                    // Test if the website is accessible
+                    sh 'curl -I localhost:8082'
+                }
+            }
+        }
+    }
+}
+
