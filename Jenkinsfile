@@ -14,8 +14,6 @@ pipeline {
         stage('Run Container') {
             steps {
                 sh '''
-                docker ps -q --filter "my-static-website" | xargs -r docker stop
-                docker ps -aq --filter "my-static-website" | xargs -r docker rm
                 docker run -d -p 8081:80 --name my-static-website my-static-website
                 '''
 
